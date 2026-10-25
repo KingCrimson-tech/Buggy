@@ -1,2 +1,5 @@
 context.md
-
+.venv/
+__pycache__/
+*.pyc
+buggy.db
