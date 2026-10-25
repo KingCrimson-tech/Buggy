@@ -1,11 +1,14 @@
 """Tiny error-reporting SDK. Only depends on requests and the stdlib."""
 
 import functools
+import logging
 import sys
 import traceback
 from datetime import datetime, timezone
 
 import requests
+
+logger = logging.getLogger("buggy")
 
 _config = {"dsn": None, "service": None, "environment": "dev"}
 _original_excepthook = sys.excepthook
@@ -59,6 +62,10 @@ def capture_exception(
         response.raise_for_status()
         return response.json().get("fingerprint")
     except Exception:
+        # Telemetry must never break the host app; log locally instead of raising.
+        logger.debug(
+            "Buggy could not report exception for route %r", route, exc_info=True
+        )
         return None
 
 
