@@ -111,3 +111,70 @@ def record_event(
         ).fetchone()
 
     return fingerprint, row["count"]
+
+def list_errors(search: str = "", service: str = "", limit: int = 50) -> list[dict]:
+    """Return error groups, most recently seen first."""
+    sql = (
+        "SELECT fingerprint, service, message, count, first_seen, last_seen "
+        "FROM errors"
+    )
+    clauses: list[str] = []
+    params: list = []
+
+    if search:
+        clauses.append("message LIKE ?")
+        params.append(f"%{search}%")
+    if service:
+        clauses.append("service = ?")
+        params.append(service)
+    if clauses:
+        sql += " WHERE " + " AND ".join(clauses)
+
+    sql += " ORDER BY last_seen DESC LIMIT ?"
+    params.append(limit)
+
+    with get_conn() as conn:
+        return [dict(row) for row in conn.execute(sql, params)]
+
+
+def get_error(fingerprint: str) -> dict | None:
+    """Return one error group, or None when it does not exist."""
+    with get_conn() as conn:
+        row = conn.execute(
+            """
+            SELECT fingerprint, service, message, count, first_seen, last_seen
+            FROM errors WHERE fingerprint = ?
+            """,
+            (fingerprint,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_events(fingerprint: str, limit: int = 20) -> list[dict]:
+    """Return the latest raw events for a group."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, route, stack, request_id, user_id, timestamp
+            FROM events WHERE fingerprint = ? ORDER BY id DESC LIMIT ?
+            """,
+            (fingerprint, limit),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_stats() -> dict:
+    """Return dashboard counters: groups, events, and today's events."""
+    today = utc_now()[:10]
+    with get_conn() as conn:
+        total_groups = conn.execute("SELECT count(*) FROM errors").fetchone()[0]
+        total_events = conn.execute("SELECT count(*) FROM events").fetchone()[0]
+        events_today = conn.execute(
+            "SELECT count(*) FROM events WHERE substr(timestamp, 1, 10) = ?",
+            (today,),
+        ).fetchone()[0]
+    return {
+        "total_groups": total_groups,
+        "total_events": total_events,
+        "events_today": events_today,
+    }
