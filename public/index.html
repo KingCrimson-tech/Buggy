@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <title>Buggy · Error Tracker</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #161b22;
+      --panel-2: #1c2330;
+      --border: #2a3240;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4f8cff;
+      --danger: #f85149;
+      --ok: #3fb950;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    header { padding: 24px 28px 8px; }
+    h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+    h1 span { color: var(--accent); }
+    .subtitle { margin: 4px 0 0; color: var(--muted); }
+    main { padding: 16px 28px 48px; max-width: 1400px; margin: 0 auto; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .card .value { font-size: 26px; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+    .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .toolbar input, .toolbar select, .toolbar button {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: inherit;
+    }
+    .toolbar input { flex: 1 1 260px; }
+    .toolbar input:focus, .toolbar select:focus, .toolbar button:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .toolbar button { cursor: pointer; }
+    .toolbar button:hover { background: var(--panel-2); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin: 0; padding: 12px 16px; font-size: 13px;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-size: 12px; color: var(--muted); font-weight: 500; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover, tbody tr.selected { background: var(--panel-2); }
+    tbody tr:last-child td { border-bottom: none; }
+    .count {
+      display: inline-block; min-width: 34px; text-align: center;
+      background: rgba(248, 81, 73, 0.14); color: #ff8a84;
+      border-radius: 999px; padding: 1px 9px; font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    .message { font-weight: 550; word-break: break-word; }
+    .service {
+      display: inline-block; border: 1px solid var(--border); border-radius: 999px;
+      padding: 1px 9px; font-size: 12px; color: var(--muted); white-space: nowrap;
+    }
+    .time { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .empty { padding: 28px 16px; color: var(--muted); text-align: center; }
+
+    aside .body { padding: 14px 16px; }
+    .detail-message { font-size: 15px; font-weight: 600; margin: 0 0 10px; word-break: break-word; }
+    .meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+    .meta b { color: var(--text); font-weight: 550; }
+    pre {
+      margin: 0 0 14px; padding: 12px; overflow: auto; max-height: 280px;
+      background: #0b0e13; border: 1px solid var(--border); border-radius: 8px;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre;
+    }
+    .events { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+    .events button {
+      width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--border);
+      color: var(--text); padding: 9px 2px; cursor: pointer; font: inherit;
+    }
+    .events button:hover { color: var(--accent); }
+    .events .event-meta { color: var(--muted); font-size: 12px; }
+    .placeholder { color: var(--muted); text-align: center; padding: 48px 20px; }
+
+    .chart-wrap { margin-top: 18px; padding: 14px 16px 18px; }
+    .chart-wrap canvas { max-height: 220px; }
+
+    .status {
+      display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px;
+      background: rgba(248, 81, 73, 0.12); border: 1px solid rgba(248, 81, 73, 0.4); color: #ffb3ae;
+    }
+    .status.show { display: block; }
+
+    @media (max-width: 980px) {
+      .stats { grid-template-columns: 1fr; }
+      .layout { grid-template-columns: 1fr; }
+      main, header { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Buggy<span>.</span></h1>
+    <p class="subtitle">Grouped error tracking for your services.</p>
+  </header>
+
+  <main>
+    <div id="status" class="status" role="alert"></div>
+
+    <section class="stats">
+      <div class="card"><div class="label">Error groups</div><div class="value" id="stat-groups">—</div></div>
+      <div class="card"><div class="label">Total events</div><div class="value" id="stat-events">—</div></div>
+      <div class="card"><div class="label">Events today</div><div class="value" id="stat-today">—</div></div>
+    </section>
+
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search messages…" aria-label="Search messages" />
+      <select id="service-filter" aria-label="Filter by service">
+        <option value="">All services</option>
+      </select>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Errors</h2>
+        <table>
+          <thead>
+            <tr><th>Count</th><th>Message</th><th>Service</th><th>Last Seen</th></tr>
+          </thead>
+          <tbody id="error-rows"></tbody>
+        </table>
+        <div id="table-empty" class="empty" hidden>No errors match your filters.</div>
+      </section>
+
+      <aside class="panel">
+        <h2>Details</h2>
+        <div id="detail-placeholder" class="placeholder">Select an error to inspect its stack and events.</div>
+        <div id="detail-body" class="body" hidden aria-live="polite">
+          <p class="detail-message" id="detail-message"></p>
+          <div class="meta">
+            <span>Service</span><b id="detail-service"></b>
+            <span>Occurrences</span><b id="detail-count"></b>
+            <span>First seen</span><b id="detail-first"></b>
+            <span>Last seen</span><b id="detail-last"></b>
+          </div>
+          <pre id="detail-stack"></pre>
+          <ul class="events" id="detail-events"></ul>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel chart-wrap">
+      <h2 style="border:0; padding:0 0 10px">Errors per day (last 7 days)</h2>
+      <canvas id="chart" height="120"></canvas>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

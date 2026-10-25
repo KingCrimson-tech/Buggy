@@ -1,8 +1,10 @@
 """Buggy ingest API and dashboard server."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
 
 from app.db import (
     get_error,
@@ -19,6 +21,8 @@ from app.models import (
     EventOut,
     StatsOut,
 )
+
+PUBLIC_DIR = Path(__file__).resolve().parents[1] / "public"
 
 
 @asynccontextmanager
@@ -78,3 +82,6 @@ def error_detail(
 def stats() -> dict:
     """Return summary counters for the dashboard header."""
     return get_stats()
+
+
+app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="dashboard")
