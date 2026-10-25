@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+buggy.db
+buggy.db-*
+context.md
+README.md

@@ -1,0 +1,29 @@
+services:
+  buggy:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      BUGGY_DB: /data/buggy.db
+    volumes:
+      - buggy_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  demo:
+    build: .
+    command: ["uvicorn", "demo.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      BUGGY_DSN: http://buggy:8000/api/events
+    depends_on:
+      buggy:
+        condition: service_healthy
+
+volumes:
+  buggy_data:

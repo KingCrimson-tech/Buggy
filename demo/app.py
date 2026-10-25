@@ -1,5 +1,6 @@
 """Demo API that reports its errors to Buggy."""
 
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,15 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sdk.buggy import capture_exception, init  # noqa: E402
 
+DSN = os.getenv("BUGGY_DSN", "http://localhost:8000/api/events")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Point the SDK at the local Buggy instance."""
-    init(
-        dsn="http://localhost:8000/api/events",
-        service="demo-api",
-        environment="dev",
-    )
+    init(dsn=DSN, service="demo-api", environment="dev")
     yield
 
 
