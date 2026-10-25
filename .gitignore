@@ -3,3 +3,5 @@ context.md
 __pycache__/
 *.pyc
 buggy.db
+*.db-wal
+*.db-shm
