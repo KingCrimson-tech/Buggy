@@ -17,6 +17,7 @@ const els = {
   detailCount: document.getElementById("detail-count"),
   detailFirst: document.getElementById("detail-first"),
   detailLast: document.getElementById("detail-last"),
+  detailStackLabel: document.getElementById("detail-stack-label"),
   detailStack: document.getElementById("detail-stack"),
   detailEvents: document.getElementById("detail-events"),
   chart: document.getElementById("chart"),
@@ -145,13 +146,25 @@ function renderDetail(detail) {
   els.detailEvents.replaceChildren();
   const events = detail.events || [];
 
-  const showStack = (event) => {
+  const showStack = (event, button) => {
+    for (const candidate of els.detailEvents.querySelectorAll("button")) {
+      const selected = candidate === button;
+      candidate.classList.toggle("selected", selected);
+      candidate.setAttribute("aria-pressed", String(selected));
+    }
+    els.detailStackLabel.textContent = "Stack for event #" + event.id;
     els.detailStack.textContent = event.stack?.trim()
       ? event.stack.trimEnd()
       : "No stack captured for this event.";
+
+    const rect = els.detailStack.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      els.detailStack.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   };
 
   if (events.length === 0) {
+    els.detailStackLabel.textContent = "Stack";
     els.detailStack.textContent = "No events captured.";
     return;
   }
@@ -160,6 +173,8 @@ function renderDetail(detail) {
     const item = document.createElement("li");
     const button = document.createElement("button");
     button.type = "button";
+    button.setAttribute("aria-pressed", "false");
+    button.title = "Show stack for event #" + event.id;
     const meta = document.createElement("div");
     meta.className = "event-meta";
     const route = event.route || "(no route)";
@@ -168,10 +183,10 @@ function renderDetail(detail) {
       .join(" · ");
     meta.textContent = "#" + event.id + " · " + route + " · " + formatTime(event.timestamp) + (extras ? " · " + extras : "");
     button.append(meta);
-    button.addEventListener("click", () => showStack(event));
+    button.addEventListener("click", () => showStack(event, button));
     item.append(button);
     els.detailEvents.append(item);
-    if (index === 0) showStack(event);
+    if (index === 0) showStack(event, button);
   });
 }
 
